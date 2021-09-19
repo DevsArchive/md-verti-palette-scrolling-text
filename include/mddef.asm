@@ -254,3 +254,108 @@ DMA_COPY macro src, dest, len, ctrl
 	endm
 
 ; --------------------------------------------------------------
+; Multiplication using bitshifting
+; --------------------------------------------------------------
+; PARAMETERS:
+;	mul  - Value to multiply with
+;	reg1 - Register to multiply on
+;	reg2 - Register to use for additional calculations
+;	reg3 - Register to use for additional calculations
+; --------------------------------------------------------------
+
+SHMUL macro mul, reg1, reg2, reg3
+	local c,c2,lsb,msb,shft,lastShft
+	if (strcmp("\0","b")=0)&(strcmp("\0","w")=0)&(strcmp("\0","l")=0)
+		inform 3,"Multiplication size invalid or undefined."
+		mexit
+	endif
+	if narg<1
+		inform 3,"Multiplication value not defined."
+		mexit
+	elseif narg<2
+		inform 3,"Destination register not defined."
+		mexit
+	endif
+
+c	= \mul						; Value to multiply with
+	if strcmp("\0","b")<>0
+c		= c&$FF
+	elseif strcmp("\0","w")<>0
+c		= c&$FFFF
+	endif
+
+	if c>1
+c2		= c					; Get least significant set bit
+lsb		= 0
+msb		= -1
+		while (c2&1)=0
+lsb			= lsb+1
+msb			= msb+1
+c2			= c2/2
+		endw
+		while c2<>0				; Get most significant set bit
+msb			= msb+1
+c2			= c2/2
+		endw
+
+		if (lsb>2)|((strcmp("\0","l")<>0)&(lsb>1))
+			if lsb>8			; Multiply up to LSB
+				if narg<3
+					inform 3,"This multiplication requires a second register."
+				endif
+				moveq	#lsb,\reg2
+				lsl.\0	\reg2,\reg1
+			else
+				lsl.\0	#lsb,\reg1
+			endif
+		else
+			rept	lsb
+				add.\0	\reg1,\reg1
+			endr
+		endif
+
+		if msb<>lsb				; Multiply rest of bits
+msb			= msb-1
+shft			= 0
+lastShft		= -1
+			if narg<3
+				inform 3,"This multiplication requires a second register."
+			endif
+			move.\0	\reg1,\reg2
+			while msb>(lsb-1)
+shft				= shft+1
+				if (c&(1<<msb))<>0
+					if (shft>2)|((strcmp("\0","l")<>0)&(shft>1))
+						if shft>8
+							if narg<4
+								inform 3,"This multiplication requires a third register."
+							endif
+							if shft<>lastShft
+lastShft							= shft
+								moveq	#shft,\reg3
+							endif
+							lsl.\0	\reg3,\reg1
+						else
+							lsl.\0	#shft,\reg1
+						endif
+					else
+						rept	shft
+							add.\0	\reg1,\reg1
+						endr
+					endif
+shft					= 0
+					add.\0	\reg2,\reg1
+				endif
+msb				= msb-1
+			endw
+		endif
+	elseif c=0
+		if strcmp("\0","l")<>0
+			moveq	#0,\reg1
+		else
+			clr.\0	\reg1
+		endif
+	endif
+	endm
+
+; --------------------------------------------------------------
