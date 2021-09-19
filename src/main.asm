@@ -34,6 +34,36 @@ PREPARE_DMA macro
 	endm
 
 ; --------------------------------------------------------------
+; DMA scanline palette
+; --------------------------------------------------------------
+
+DMA_LINE macro
+	move.l	d7,(a6)					; Disable display and send Send command high word
+	move.w	dmaCmdLow.w,(a6)			; Send DMA command low word
+	PREPARE_DMA					; Prepare next DMA
+	endm
+
+; --------------------------------------------------------------
+; Get palette data
+; --------------------------------------------------------------
+
+GET_LINE_PAL macro
+	lea	TextData,a1				; Get text data line
+	move.l	textDataOffset.w,d0
+	add.l	(a4)+,d0
+	clr.w	d0
+	swap	d0
+	lsl.l	#4,d0
+	add.l	d0,a1
+
+	lea	palette.w,a0				; Copy colors
+	move.l	(a1)+,(a0)+
+	move.l	(a1)+,(a0)+
+	move.l	(a1)+,(a0)+
+	move.l	(a1),(a0)
+	endm
+
+; --------------------------------------------------------------
 ; Program
 ; --------------------------------------------------------------
 
@@ -63,8 +93,7 @@ Main:
 
 	move.l	#$8134C002,d7				; Display disable + DMA command high word
 	move.w	#$80,dmaCmdLow.w			; DMA command low word
-
-	PREPARE_DMA					; Prepare DMA
+	PREPARE_DMA					; Prepare first DMA
 
 ; --------------------------------------------------------------
 
@@ -72,39 +101,26 @@ Main:
 	lea	TextLineIDs,a4				; Text pattern
 	move.w	#$E0-1,d6				; Number of scanlines
 
-.WaitV:
-	tst.b	-1(a5)					; Are we at the top of the screen?
-	bne.s	.WaitV					; If not, wait
+	GET_LINE_PAL					; Get palette data for first scanline
+	DMA_LINE					; DMA palette data
 
+.WaitV:
+	move.w	(a6),ccr				; Is V-BLANK still active?
+	bmi.s	.WaitV					; If so, wait
+	
 .WaitH:
-	tst.b	(a5)					; Are we still offscreen?
-	bmi.s	.WaitH					; If so, wait
+	move.w	(a6),ccr				; Is H-BLANK still active?
+	bne.s	.WaitH					; If so, wait
 
 .ScanlineLoop:
-	lea	TextData,a1				; Get text data line
-	move.l	textDataOffset.w,d0
-	add.l	(a4)+,d0
-	clr.w	d0
-	swap	d0
-	lsl.l	#4,d0
-	add.l	d0,a1
-
-	lea	palette.w,a0				; Copy colors
-	move.l	(a1)+,(a0)+
-	move.l	(a1)+,(a0)+
-	move.l	(a1)+,(a0)+
-	move.l	(a1),(a0)
-
+	GET_LINE_PAL					; Get palette data for this scanline
 	moveq	#$FFFFFF9A,d0				; Wait until we are almost offscreen
 
 .WaitHBLANK:
 	cmp.b	(a5),d0
 	bhi.s	.WaitHBLANK
 
-	move.l	d7,(a6)					; Disable display and send Send command high word
-	move.w	dmaCmdLow.w,(a6)			; Send DMA command low word
-	PREPARE_DMA					; Prepare next DMA
-
+	DMA_LINE					; DMA palette data
 	dbf	d6,.ScanlineLoop			; Loop until all scanlines are processed
 
 	addi.l	#SCROLL_SPEED,textDataOffset.w		; Scroll text
