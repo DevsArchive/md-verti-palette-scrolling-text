@@ -95,6 +95,10 @@ Main:
 	move.w	#$80,dmaCmdLow.w			; DMA command low word
 	PREPARE_DMA					; Prepare first DMA
 
+.WaitVBlankStart:
+	move.w	(a6),ccr				; Is V-BLANK active?
+	bpl.s	.WaitVBlankStart			; If not, wait
+
 ; --------------------------------------------------------------
 
 .MainLoop:
@@ -104,13 +108,13 @@ Main:
 	GET_LINE_PAL					; Get palette data for first scanline
 	DMA_LINE					; DMA palette data
 
-.WaitV:
+.WaitVBlankEnd:
 	move.w	(a6),ccr				; Is V-BLANK still active?
-	bmi.s	.WaitV					; If so, wait
+	bmi.s	.WaitVBlankEnd				; If so, wait
 	
-.WaitH:
+.WaitHBlankEnd:
 	move.w	(a6),ccr				; Is H-BLANK still active?
-	bne.s	.WaitH					; If so, wait
+	bne.s	.WaitHBlankEnd				; If so, wait
 
 .ScanlineLoop:
 	GET_LINE_PAL					; Get palette data for this scanline
@@ -176,67 +180,174 @@ TextData:
 	rept	224/16
 		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
 	endr
-	rept	2
-		; T
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		
-		; E
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000, $000
-		dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
-		dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		
-		; S
-		dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$EEE, $EEE, $EEE, $000, $000, $000, $000, $000
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
-		dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$000, $000, $000, $000, $000, $EEE, $EEE, $EEE
-		dc.w	$000, $000, $000, $000, $000, $EEE, $EEE, $EEE
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
 
-		; T
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		
-		; Blank
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-		dc.w	$000, $000, $000, $000, $000, $000, $000, $000
-	endr
+	; Toof
+	dc.w	$000, $00E, $000, $000, $000, $000, $000, $00E
+	dc.w	$000, $00E, $00E, $000, $000, $000, $00E, $00E
+	dc.w	$000, $00E, $00E, $00E, $00E, $00E, $00E, $00E
+	dc.w	$000, $00E, $EEE, $EEE, $00E, $EEE, $EEE, $00E
+	dc.w	$000, $00E, $EEE, $000, $00E, $EEE, $000, $00E
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $000
+	dc.w	$000, $EEE, $EEE, $000, $000, $EEE, $000, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; Space
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	
+	; Z
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $EEE, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $EEE, $EEE, $EEE, $000
+	dc.w	$000, $000, $EEE, $EEE, $EEE, $EEE, $000, $000
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $000, $000, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; O
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; M
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $000, $000, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; G
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
+	dc.w	$EEE, $EEE, $000, $000, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; Space
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; R
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; E
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000, $000
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; D
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+
+	; Space
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	
+	; C
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $000, $000
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	
+	; A
+	dc.w	$000, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $000
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $000, $000, $000, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	
+	; T
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE, $EEE
+	dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
+	dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
+	dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
+	dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
+	dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
+	dc.w	$000, $000, $000, $EEE, $EEE, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	
+	; !!!
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$EEE, $EEE, $000, $EEE, $EEE, $000, $EEE, $EEE
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
+	dc.w	$000, $000, $000, $000, $000, $000, $000, $000
 
 TextData_End:
 	rept	224/16
