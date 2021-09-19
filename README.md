@@ -1,4 +1,4 @@
-# Veritcal palette scrolling text demo for Sega Genesis/Mega Drive
+# Vertical palette scrolling text demo for Sega Genesis/Mega Drive
 An old, well known trick. Updates the palette on each line of a base image to draw an image to draw text (or really anything).
 The formation of the base image will affect whatever is drawn, which can be used for some neat effects.
 
