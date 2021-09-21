@@ -137,7 +137,7 @@ Main:
 
 .MainLoop:
 	lea	TextLineIDs,a4				; Text pattern
-	move.w	#$E0-1,d6				; Number of scanlines
+	move.w	#$E0-1-1,d6				; Number of scanlines
 
 	GET_LINE_PAL					; Get palette data for first scanline
 	DMA_LINE					; DMA palette data
@@ -160,6 +160,10 @@ Main:
 
 	DMA_LINE					; DMA palette data
 	dbf	d6,.ScanlineLoop			; Loop until all scanlines are processed
+
+.WaitVBlankStart2:
+	move.w	(a6),ccr				; Is V-BLANK active?
+	bpl.s	.WaitVBlankStart2			; If not, wait
 
 	addi.l	#SCROLL_SPEED,textDataOffset.w		; Scroll text
 	cmpi.w	#(TextData_End-TextData)/(COLOR_COUNT*2),textDataOffset.w
